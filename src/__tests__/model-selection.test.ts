@@ -49,6 +49,8 @@ describe('Model Selection and Reasoning Effort', () => {
       'exec',
       '--model',
       'gpt-4',
+      '-c',
+      'model_reasoning_effort="high"',
       '--skip-git-repo-check',
       'Test prompt',
     ]);

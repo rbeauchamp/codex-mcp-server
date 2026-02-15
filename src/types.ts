@@ -15,6 +15,9 @@ export type ToolName = typeof TOOLS[keyof typeof TOOLS];
 export const DEFAULT_CODEX_MODEL = 'gpt-5.3-codex' as const;
 export const CODEX_DEFAULT_MODEL_ENV_VAR = 'CODEX_DEFAULT_MODEL' as const;
 
+// Default reasoning effort: 'high' for deep thinking. Override via CODEX_REASONING_EFFORT env var or per-call param.
+export const DEFAULT_REASONING_EFFORT = (process.env.CODEX_REASONING_EFFORT || 'high') as 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+
 // Available model options (for documentation/reference)
 export const AVAILABLE_CODEX_MODELS = [
   'gpt-5.3-codex',

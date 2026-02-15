@@ -2,6 +2,7 @@ import {
   TOOLS,
   DEFAULT_CODEX_MODEL,
   CODEX_DEFAULT_MODEL_ENV_VAR,
+  DEFAULT_REASONING_EFFORT,
   type ToolResult,
   type ToolHandlerContext,
   type CodexToolArgs,
@@ -103,9 +104,8 @@ export class CodexToolHandler {
         cmdArgs.push('-c', `model="${selectedModel}"`);
 
         // Reasoning effort via config (before subcommand)
-        if (reasoningEffort) {
-          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
-        }
+        const resumeEffort = reasoningEffort || DEFAULT_REASONING_EFFORT;
+        cmdArgs.push('-c', `model_reasoning_effort="${resumeEffort}"`);
 
         // Add resume subcommand with conversation ID and prompt
         cmdArgs.push('resume', codexConversationId, enhancedPrompt);
@@ -117,9 +117,8 @@ export class CodexToolHandler {
         cmdArgs.push('--model', selectedModel);
 
         // Add reasoning effort via config parameter (quoted for consistency)
-        if (reasoningEffort) {
-          cmdArgs.push('-c', `model_reasoning_effort="${reasoningEffort}"`);
-        }
+        const execEffort = reasoningEffort || DEFAULT_REASONING_EFFORT;
+        cmdArgs.push('-c', `model_reasoning_effort="${execEffort}"`);
 
         // Add sandbox mode (v0.75.0+)
         if (sandbox) {
