@@ -1,5 +1,5 @@
 type ProcessEnv = Record<string, string | undefined>;
-import { spawn } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import { Buffer } from 'node:buffer';
 import chalk from 'chalk';
 import { CommandExecutionError } from '../errors.js';
@@ -24,11 +24,30 @@ const isWindows = process.platform === 'win32';
 // Maximum buffer size (10MB) to prevent memory exhaustion from noisy processes
 const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
+// Default timeout: 15 minutes. Override via CODEX_TIMEOUT_MS env var.
+const DEFAULT_TIMEOUT_MS = 15 * 60 * 1000;
+const TIMEOUT_MS = parseInt(process.env.CODEX_TIMEOUT_MS || '', 10) || DEFAULT_TIMEOUT_MS;
+
+// Grace period after SIGTERM before SIGKILL
+const KILL_GRACE_MS = 5000;
+
 export type ProgressCallback = (message: string) => void;
 
 export interface StreamingCommandOptions {
   onProgress?: ProgressCallback;
   envOverride?: ProcessEnv;
+}
+
+/**
+ * Kill a child process with SIGTERM, then SIGKILL after grace period.
+ */
+function killProcess(child: ChildProcess): void {
+  child.kill('SIGTERM');
+  setTimeout(() => {
+    if (!child.killed) {
+      child.kill('SIGKILL');
+    }
+  }, KILL_GRACE_MS);
 }
 
 export async function executeCommand(
@@ -52,6 +71,14 @@ export async function executeCommand(
     let stderr = '';
     let stdoutTruncated = false;
     let stderrTruncated = false;
+    let timedOut = false;
+
+    // Timeout: kill the process if it runs too long
+    const timer = setTimeout(() => {
+      timedOut = true;
+      console.error(chalk.red(`Timeout: killing codex process after ${TIMEOUT_MS / 1000}s`));
+      killProcess(child);
+    }, TIMEOUT_MS);
 
     child.stdout.on('data', (data: Buffer) => {
       if (!stdoutTruncated) {
@@ -80,8 +107,24 @@ export async function executeCommand(
     });
 
     child.on('close', (code) => {
+      clearTimeout(timer);
+
       if (stderr) {
         console.error(chalk.yellow('Command stderr:'), stderr);
+      }
+
+      if (timedOut) {
+        // Return partial output with timeout error so caller knows what happened
+        const partialOutput = stdout || stderr;
+        reject(
+          new CommandExecutionError(
+            [file, ...args].join(' '),
+            `Command timed out after ${TIMEOUT_MS / 1000}s` +
+              (partialOutput ? `. Partial output: ${partialOutput.slice(0, 500)}` : ''),
+            new Error('TIMEOUT')
+          )
+        );
+        return;
       }
 
       // Accept exit code 0 or if we got stdout/stderr output
@@ -105,6 +148,7 @@ export async function executeCommand(
     });
 
     child.on('error', (error) => {
+      clearTimeout(timer);
       reject(
         new CommandExecutionError(
           [file, ...args].join(' '),
@@ -152,7 +196,15 @@ export async function executeCommandStreaming(
     let stdoutTruncated = false;
     let stderrTruncated = false;
     let lastProgressTime = 0;
+    let timedOut = false;
     const PROGRESS_DEBOUNCE_MS = 100; // Debounce progress updates
+
+    // Timeout: kill the process if it runs too long
+    const timer = setTimeout(() => {
+      timedOut = true;
+      console.error(chalk.red(`Timeout: killing codex process after ${TIMEOUT_MS / 1000}s`));
+      killProcess(child);
+    }, TIMEOUT_MS);
 
     const sendProgress = (message: string) => {
       if (!options.onProgress) return;
@@ -195,6 +247,8 @@ export async function executeCommandStreaming(
     });
 
     child.on('close', (code) => {
+      clearTimeout(timer);
+
       // Send final progress if there's any remaining output
       if (options.onProgress && (stdout || stderr)) {
         const finalOutput = stdout || stderr;
@@ -204,6 +258,19 @@ export async function executeCommandStreaming(
             `[Completed] ${lastChunk.trim().slice(0, 200)}...`
           );
         }
+      }
+
+      if (timedOut) {
+        const partialOutput = stdout || stderr;
+        reject(
+          new CommandExecutionError(
+            [file, ...args].join(' '),
+            `Command timed out after ${TIMEOUT_MS / 1000}s` +
+              (partialOutput ? `. Partial output: ${partialOutput.slice(0, 500)}` : ''),
+            new Error('TIMEOUT')
+          )
+        );
+        return;
       }
 
       if (code === 0 || stdout || stderr) {
@@ -226,6 +293,7 @@ export async function executeCommandStreaming(
     });
 
     child.on('error', (error) => {
+      clearTimeout(timer);
       reject(
         new CommandExecutionError(
           [file, ...args].join(' '),
