@@ -48,7 +48,7 @@ describe('Default Model Configuration', () => {
       '--model',
       'gpt-5.3-codex',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       '--skip-git-repo-check',
       'Test prompt',
     ]);
@@ -73,7 +73,7 @@ describe('Default Model Configuration', () => {
       '--model',
       'gpt-4',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       '--skip-git-repo-check',
       'Test prompt',
     ]);
@@ -92,7 +92,7 @@ describe('Default Model Configuration', () => {
       '--model',
       'gpt-5.3-codex',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       '--skip-git-repo-check',
       'Test prompt',
     ]);
@@ -114,7 +114,7 @@ describe('Default Model Configuration', () => {
       '-c',
       'model="gpt-5.3-codex"',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       'resume',
       'existing-conv-id',
       'Resume with default model',
@@ -150,7 +150,7 @@ describe('Default Model Configuration', () => {
         '--model',
         'gpt-4',
         '-c',
-        'model_reasoning_effort="high"',
+        'model_reasoning_effort="xhigh"',
         '--skip-git-repo-check',
         'Test with env var',
       ]);
@@ -178,7 +178,7 @@ describe('Default Model Configuration', () => {
         '--model',
         'gpt-3.5-turbo',
         '-c',
-        'model_reasoning_effort="high"',
+        'model_reasoning_effort="xhigh"',
         '--skip-git-repo-check',
         'Test priority',
       ]);

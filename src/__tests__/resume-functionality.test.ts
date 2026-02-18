@@ -53,7 +53,7 @@ describe('Codex Resume Functionality', () => {
       '--model',
       'gpt-5.3-codex',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       '--skip-git-repo-check',
       'First message',
     ]);
@@ -160,7 +160,7 @@ describe('Codex Resume Functionality', () => {
       '-c',
       'model="gpt-5.3-codex"',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       'resume',
       'existing-codex-session-id',
       'Continue the task',
@@ -188,7 +188,7 @@ describe('Codex Resume Functionality', () => {
       '--model',
       'gpt-5.3-codex',
       '-c',
-      'model_reasoning_effort="high"',
+      'model_reasoning_effort="xhigh"',
       '--skip-git-repo-check',
       'Reset and start new',
     ]);
